@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    # Base de datos EXCLUSIVA para tests — separada de apiPrecios de producción
+    url: jdbc:postgresql://localhost:5432/apiPrecios
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      # create-drop: crea las tablas al iniciar el test y las borra al terminar
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    com.apiprecios: DEBUG

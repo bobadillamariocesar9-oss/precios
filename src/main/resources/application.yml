@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: api-precios
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/apiPrecios
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: ApiPreciosPool
+
+  jpa:
+    hibernate:
+      ddl-auto: validate      # valida que entidades y tablas coincidan al arrancar
+    show-sql: false           # el SQL ya se loguea abajo con org.hibernate.SQL
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 25      # inserts/updates en lote
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 20   # mitiga el problema N+1 en relaciones LAZY
+    open-in-view: false
+
+  jackson:
+    default-property-inclusion: non_null   # omite campos null en el JSON
+    serialization:
+      write-dates-as-timestamps: false     # fechas en formato ISO-8601
+
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param   # solo si se pasa ?trace=true
+  compression:
+    enabled: true
+  shutdown: graceful
+
+# Orígenes permitidos para CORS
+app:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:4200,http://localhost:5173,http://localhost:8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+  packages-to-scan: com.apiprecios.controller
+  show-actuator: false
+
+logging:
+  level:
+    root: INFO
+    com.apiprecios: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

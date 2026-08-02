@@ -1,0 +1,197 @@
+package com.apiprecios.repository;
+
+import com.apiprecios.AbstractRepositoryTest;
+import com.apiprecios.entity.Product;
+import com.apiprecios.entity.Store;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+
+@DisplayName("ProductRepository")
+class ProductRepositoryTest extends AbstractRepositoryTest {
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
+
+    private Store mercado;
+    private Store falabella;
+    private Product notebook;
+    private Product mouse;
+    private Product teclado;
+
+    @BeforeEach
+    void setUp() {
+        productRepository.deleteAll();
+        storeRepository.deleteAll();
+
+        mercado = storeRepository.save(Store.builder()
+                .name("MercadoLibre").url("https://www.mercadolibre.com").build());
+        falabella = storeRepository.save(Store.builder()
+                .name("Falabella").url("https://www.falabella.com").build());
+
+        notebook = productRepository.save(Product.builder()
+                .name("Notebook Dell Inspiron 15")
+                .description("Laptop con procesador Intel Core i5, 8GB RAM")
+                .imageUrl("https://img.com/notebook.jpg")
+                .url("https://www.mercadolibre.com/notebook-dell")
+                .store(mercado)
+                .build());
+
+        mouse = productRepository.save(Product.builder()
+                .name("Mouse Logitech MX Master")
+                .description("Mouse inalámbrico ergonómico")
+                .imageUrl("https://img.com/mouse.jpg")
+                .store(mercado)
+                .build());
+
+        teclado = productRepository.save(Product.builder()
+                .name("Teclado Mecánico RGB")
+                .description("Teclado gaming con switches Cherry MX")
+                .imageUrl("https://img.com/teclado.jpg")
+                .store(falabella)
+                .build());
+    }
+
+    // ─── save ────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("save: persiste producto y asigna ID")
+    void save_persistsProductWithId() {
+        Product p = productRepository.save(Product.builder()
+                .name("Monitor LG 27\"")
+                .store(falabella)
+                .build());
+
+        assertThat(p.getId()).isNotNull();
+        assertThat(p.getCreatedAt()).isNotNull();
+    }
+
+    // ─── findAll ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findAll: retorna todos los productos")
+    void findAll_returnsAllProducts() {
+        assertThat(productRepository.findAll()).hasSize(3);
+    }
+
+    // ─── findById ────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findById: retorna producto existente")
+    void findById_returnsProduct() {
+        Optional<Product> found = productRepository.findById(notebook.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("Notebook Dell Inspiron 15");
+    }
+
+    @Test
+    @DisplayName("findById: retorna vacío para ID inexistente")
+    void findById_returnsEmptyForUnknownId() {
+        assertThat(productRepository.findById(99999)).isEmpty();
+    }
+
+    // ─── findByStoreId ───────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findByStoreId: retorna productos de la tienda indicada")
+    void findByStoreId_returnsProductsOfStore() {
+        List<Product> result = productRepository.findByStoreId(mercado.getId());
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(Product::getName)
+                .containsExactlyInAnyOrder("Notebook Dell Inspiron 15", "Mouse Logitech MX Master");
+    }
+
+    @Test
+    @DisplayName("findByStoreId: retorna lista vacía si tienda no tiene productos")
+    void findByStoreId_returnsEmptyForStoreWithNoProducts() {
+        Store nueva = storeRepository.save(Store.builder()
+                .name("Ripley").url("https://ripley.com").build());
+        assertThat(productRepository.findByStoreId(nueva.getId())).isEmpty();
+    }
+
+    // ─── findByNameContainingIgnoreCase ───────────────────────────────────────
+
+    @Test
+    @DisplayName("findByNameContainingIgnoreCase: búsqueda parcial case-insensitive")
+    void findByNameContaining_returnsCaseInsensitiveMatches() {
+        List<Product> result = productRepository.findByNameContainingIgnoreCase("logitech");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Mouse Logitech MX Master");
+    }
+
+    @Test
+    @DisplayName("findByNameContainingIgnoreCase: retorna vacío si no hay coincidencias")
+    void findByNameContaining_returnsEmptyWhenNoMatch() {
+        assertThat(productRepository.findByNameContainingIgnoreCase("noexiste")).isEmpty();
+    }
+
+    // ─── findByIdWithStore (JOIN FETCH) ───────────────────────────────────────
+
+    @Test
+    @DisplayName("findByIdWithStore: carga el producto con su tienda en una sola query")
+    void findByIdWithStore_returnsProductWithStore() {
+        Product found = productRepository.findByIdWithStore(notebook.getId());
+        assertThat(found).isNotNull();
+        assertThat(found.getStore()).isNotNull();
+        assertThat(found.getStore().getName()).isEqualTo("MercadoLibre");
+    }
+
+    @Test
+    @DisplayName("findByIdWithStore: retorna null para ID inexistente")
+    void findByIdWithStore_returnsNullForUnknownId() {
+        Product found = productRepository.findByIdWithStore(99999);
+        assertThat(found).isNull();
+    }
+
+    // ─── searchByKeyword (ILIKE) ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("searchByKeyword: busca en nombre del producto (case-insensitive)")
+    void searchByKeyword_findsInName() {
+        List<Product> result = productRepository.searchByKeyword("dell");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).contains("Dell");
+    }
+
+    @Test
+    @DisplayName("searchByKeyword: busca en descripción del producto")
+    void searchByKeyword_findsInDescription() {
+        List<Product> result = productRepository.searchByKeyword("Cherry MX");
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Teclado Mecánico RGB");
+    }
+
+    @Test
+    @DisplayName("searchByKeyword: retorna múltiples coincidencias")
+    void searchByKeyword_returnsMultipleMatches() {
+        // "Intel" aparece solo en notebook, pero probamos un término en varios
+        List<Product> result = productRepository.searchByKeyword("mouse");
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("searchByKeyword: retorna lista vacía sin coincidencias")
+    void searchByKeyword_returnsEmptyWhenNoMatch() {
+        List<Product> result = productRepository.searchByKeyword("zzznomatch");
+        assertThat(result).isEmpty();
+    }
+
+    // ─── delete ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("delete: elimina un producto")
+    void delete_removesProduct() {
+        productRepository.delete(mouse);
+        assertThat(productRepository.findAll()).hasSize(2);
+        assertThat(productRepository.findById(mouse.getId())).isEmpty();
+    }
+}
