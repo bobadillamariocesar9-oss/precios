@@ -1,0 +1,140 @@
+/* ── Layout ───────────────────────────────────────────────── */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Navbar ───────────────────────────────────────────────── */
+.navbar-brand { font-size: 1.2rem; letter-spacing: 0.5px; }
+
+/* ── Cards de productos ───────────────────────────────────── */
+.product-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+  border-radius: 10px;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.1) !important;
+}
+
+/* ── Modal overlay ────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 580px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+/* ── Tablas ───────────────────────────────────────────────── */
+.table th { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+.table td { vertical-align: middle; }
+
+/* ── Badges de estado ─────────────────────────────────────── */
+.badge { font-weight: 500; }
+
+/* ── Cards generales ──────────────────────────────────────── */
+.card { border: none; border-radius: 10px; }
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+  font-weight: 500;
+}
+
+/* ── Spinner overlay en botones ───────────────────────────── */
+.spinner-border-sm { width: 1rem; height: 1rem; border-width: .15em; }
+
+/* ── Cards de categoría (grandes, pantalla principal) ─────── */
+.cat-card-big {
+  border-radius: 18px;
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  color: #fff;
+  user-select: none;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.cat-card-big:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.22) !important;
+}
+.cat-icon-big  { font-size: 3.5rem; display: block; margin-bottom: .75rem; }
+.cat-name-big  { font-weight: 700; font-size: 1.4rem; margin-bottom: .3rem; }
+.cat-desc      { font-size: .82rem; opacity: .85; margin-bottom: .6rem; }
+.cat-count-big { font-size: .8rem; background: rgba(255,255,255,.25); border-radius: 20px; padding: .2rem .8rem; }
+
+.cat-success   { background: linear-gradient(135deg, #198754, #2ecc71); }
+.cat-info      { background: linear-gradient(135deg, #0b8fa8, #17a2b8); }
+.cat-danger    { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+.cat-primary   { background: linear-gradient(135deg, #0d6efd, #3d8bfd); }
+.cat-warning   { background: linear-gradient(135deg, #d97706, #ffc107); }
+.cat-secondary { background: linear-gradient(135deg, #6c757d, #868e96); }
+.cat-dark      { background: linear-gradient(135deg, #212529, #495057); }
+.cat-purple    { background: linear-gradient(135deg, #6f42c1, #9b6ddb); }
+
+/* ── Cards de sub-producto ────────────────────────────────── */
+.subproduct-card {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
+  border-left: 4px solid transparent !important;
+}
+.subproduct-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.1) !important;
+  border-left-color: #0d6efd !important;
+}
+
+/* ── Filas de producto con marca a la izquierda ──────────────── */
+.subproduct-row {
+  cursor: pointer;
+  border-left: 4px solid transparent !important;
+  transition: background-color 0.15s ease, border-color 0.15s;
+}
+.subproduct-row:hover {
+  background-color: #f8f9fa;
+  border-left-color: #0d6efd !important;
+}
+/* ── Acordeón de marcas ──────────────────────────────────────── */
+.brand-accordion {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.08);
+}
+.brand-group + .brand-group {
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+.brand-group-header {
+  cursor: pointer;
+  background: #f8f9fa;
+  transition: background-color 0.15s ease;
+  letter-spacing: .03em;
+}
+.brand-group-header:hover {
+  background-color: #eef2f7;
+}
+@media (max-width: 576px) {
+  .subproduct-row .brand-col { width: 90px; min-width: 90px; font-size: .7rem; }
+}

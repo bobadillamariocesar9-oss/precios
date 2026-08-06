@@ -1,0 +1,191 @@
+package com.apiprecios.repository;
+
+import com.apiprecios.AbstractRepositoryTest;
+import com.apiprecios.entity.User;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+
+@DisplayName("UserRepository")
+class UserRepositoryTest extends AbstractRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User mario;
+    private User ana;
+
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
+
+        mario = userRepository.save(User.builder()
+                .username("mario")
+                .email("mario@example.com")
+                .password("hashed_password_1")
+                .build());
+
+        ana = userRepository.save(User.builder()
+                .username("ana")
+                .email("ana@example.com")
+                .password("hashed_password_2")
+                .build());
+    }
+
+    // ─── save ────────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("save: persiste un usuario y asigna ID")
+    void save_persistsUserWithId() {
+        User user = userRepository.save(User.builder()
+                .username("carlos")
+                .email("carlos@example.com")
+                .password("pass")
+                .build());
+
+        assertThat(user.getId()).isNotNull();
+        assertThat(user.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("save: falla con email duplicado")
+    void save_failsOnDuplicateEmail() {
+        User duplicate = User.builder()
+                .username("otro")
+                .email("mario@example.com")
+                .password("pass")
+                .build();
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
+                .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("save: falla con username duplicado")
+    void save_failsOnDuplicateUsername() {
+        User duplicate = User.builder()
+                .username("mario")
+                .email("otro@example.com")
+                .password("pass")
+                .build();
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
+                .isInstanceOf(Exception.class);
+    }
+
+    // ─── findAll ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findAll: retorna todos los usuarios")
+    void findAll_returnsAllUsers() {
+        List<User> users = userRepository.findAll();
+        assertThat(users).hasSize(2);
+    }
+
+    // ─── findById ────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findById: retorna usuario existente")
+    void findById_returnsUser() {
+        Optional<User> found = userRepository.findById(mario.getId());
+        assertThat(found).isPresent();
+        assertThat(found.get().getUsername()).isEqualTo("mario");
+    }
+
+    @Test
+    @DisplayName("findById: retorna vacío para ID inexistente")
+    void findById_returnsEmptyForUnknownId() {
+        Optional<User> found = userRepository.findById(99999);
+        assertThat(found).isEmpty();
+    }
+
+    // ─── findByEmail ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findByEmail: retorna usuario por email")
+    void findByEmail_returnsUser() {
+        Optional<User> found = userRepository.findByEmail("mario@example.com");
+        assertThat(found).isPresent();
+        assertThat(found.get().getUsername()).isEqualTo("mario");
+    }
+
+    @Test
+    @DisplayName("findByEmail: retorna vacío para email inexistente")
+    void findByEmail_returnsEmptyForUnknownEmail() {
+        Optional<User> found = userRepository.findByEmail("noexiste@example.com");
+        assertThat(found).isEmpty();
+    }
+
+    // ─── findByUsername ───────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findByUsername: retorna usuario por username")
+    void findByUsername_returnsUser() {
+        Optional<User> found = userRepository.findByUsername("ana");
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("ana@example.com");
+    }
+
+    @Test
+    @DisplayName("findByUsername: retorna vacío para username inexistente")
+    void findByUsername_returnsEmptyForUnknownUsername() {
+        Optional<User> found = userRepository.findByUsername("fantasma");
+        assertThat(found).isEmpty();
+    }
+
+    // ─── existsByEmail ────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("existsByEmail: true para email registrado")
+    void existsByEmail_trueForExistingEmail() {
+        assertThat(userRepository.existsByEmail("mario@example.com")).isTrue();
+    }
+
+    @Test
+    @DisplayName("existsByEmail: false para email no registrado")
+    void existsByEmail_falseForUnknownEmail() {
+        assertThat(userRepository.existsByEmail("noexiste@example.com")).isFalse();
+    }
+
+    // ─── existsByUsername ─────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("existsByUsername: true para username registrado")
+    void existsByUsername_trueForExistingUsername() {
+        assertThat(userRepository.existsByUsername("ana")).isTrue();
+    }
+
+    @Test
+    @DisplayName("existsByUsername: false para username no registrado")
+    void existsByUsername_falseForUnknownUsername() {
+        assertThat(userRepository.existsByUsername("fantasma")).isFalse();
+    }
+
+    // ─── delete ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("delete: elimina un usuario existente")
+    void delete_removesUser() {
+        userRepository.delete(mario);
+        assertThat(userRepository.findById(mario.getId())).isEmpty();
+        assertThat(userRepository.findAll()).hasSize(1);
+    }
+
+    // ─── update ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("update: modifica el email de un usuario")
+    void update_changesEmail() {
+        mario.setEmail("mario_nuevo@example.com");
+        User saved = userRepository.save(mario);
+
+        assertThat(saved.getEmail()).isEqualTo("mario_nuevo@example.com");
+        assertThat(saved.getId()).isEqualTo(mario.getId());
+    }
+}

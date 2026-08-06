@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Precios</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="/css/style.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#" @click.prevent="navigate('categories')">
+        <i class="bi bi-tag-fill me-2"></i>API Precios
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" :class="{active: currentRoute==='categories'}"
+               href="#" @click.prevent="navigate('categories')">
+              <i class="bi bi-grid me-1"></i>Categorías
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" :class="{active: currentRoute==='users'}"
+               href="#" @click.prevent="navigate('users')">
+              <i class="bi bi-people me-1"></i>Usuarios
+            </a>
+          </li>
+          <li class="nav-item" v-if="auth.username">
+            <a class="nav-link" :class="{active: currentRoute==='favorites'}"
+               href="#" @click.prevent="navigate('favorites')">
+              <i class="bi bi-heart me-1"></i>Favoritos
+            </a>
+          </li>
+          <li class="nav-item" v-if="auth.username">
+            <a class="nav-link" :class="{active: currentRoute==='admin'}"
+               href="#" @click.prevent="navigate('admin')">
+              <i class="bi bi-gear me-1"></i>Admin
+            </a>
+          </li>
+        </ul>
+        <div class="d-flex align-items-center gap-2">
+          <a class="btn btn-outline-light btn-sm position-relative" href="#"
+             @click.prevent="navigate('cart')">
+            <i class="bi bi-cart3 me-1"></i>Carrito
+            <span v-if="cart.length > 0"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ cart.length }}
+            </span>
+          </a>
+          <span v-if="auth.username" class="text-white-50 small">
+            <i class="bi bi-person-check me-1"></i>{{ auth.username }}
+          </span>
+          <button v-if="auth.username" class="btn btn-outline-light btn-sm" @click="logout">
+            <i class="bi bi-box-arrow-right me-1"></i>Salir
+          </button>
+          <button v-else class="btn btn-outline-light btn-sm" @click="navigate('users')">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Ingresar
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Alert global -->
+  <div v-if="alert.message" class="container mt-3">
+    <div :class="`alert alert-${alert.type} alert-dismissible`" role="alert">
+      {{ alert.message }}
+      <button type="button" class="btn-close" @click="alert.message=''"></button>
+    </div>
+  </div>
+
+  <main class="container py-4">
+
+    <!-- ═══════════════════ CATEGORÍAS ═══════════════════ -->
+    <section v-if="currentRoute==='categories'">
+
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="#" @click.prevent="selectedCategory=null">
+              <i class="bi bi-grid me-1"></i>Todas las categorías
+            </a>
+          </li>
+          <li v-if="selectedCategory" class="breadcrumb-item active">{{ selectedCategory }}</li>
+        </ol>
+      </nav>
+
+      <!-- Spinner carga inicial -->
+      <div v-if="catLoading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2 text-muted">Cargando categorías…</p>
+      </div>
+
+      <!-- ── Vista: grupos de categorías ── -->
+      <div v-else-if="!selectedCategory">
+        <h2 class="mb-1">Explorar por categoría</h2>
+        <p class="text-muted mb-4">Selecciona una categoría para ver sus productos</p>
+
+        <div class="row g-4 justify-content-center">
+          <div v-for="cat in fixedCategories" :key="cat.name" class="col-sm-6 col-md-4">
+            <div class="cat-card-big" :class="`cat-${cat.color}`" @click="selectCategory(cat.name)">
+              <i :class="`bi ${cat.icon} cat-icon-big`"></i>
+              <div class="cat-name-big">{{ cat.name }}</div>
+              <div class="cat-desc">{{ cat.description }}</div>
+              <div class="cat-count-big">
+                {{ (categories[cat.name] || []).length }} producto{{ (categories[cat.name] || []).length !== 1 ? 's' : '' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Vista: sub-productos de una categoría ── -->
+      <div v-else>
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <button class="btn btn-outline-secondary btn-sm" @click="selectedCategory=null">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+          </button>
+          <h2 class="mb-0">
+            <i :class="`bi ${fixedCategories.find(c=>c.name===selectedCategory)?.icon || 'bi-tag'} me-2 text-primary`"></i>
+            {{ selectedCategory }}
+          </h2>
+          <span class="badge bg-secondary">{{ categoryProducts.length }}</span>
+        </div>
+
+        <div v-if="categoryProducts.length === 0" class="text-center text-muted py-5">
+          <i class="bi bi-inbox display-4"></i>
+          <p class="mt-2">No hay productos en esta categoría todavía.</p>
+          <small>Ejecuta <code>data-sample.sql</code> en PostgreSQL para cargar datos de ejemplo.</small>
+        </div>
+        <div v-else class="brand-accordion shadow-sm">
+          <div v-for="g in familyGroups" :key="g.family" class="brand-group">
+            <div class="brand-group-header d-flex align-items-center py-3 px-3"
+                 @click="toggleFamily(g.family)">
+              <i class="bi text-primary me-2"
+                 :class="expandedFamilies[g.family] ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+              <span class="fw-bold text-uppercase flex-grow-1">{{ g.family }}</span>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                {{ g.products.length }} producto{{ g.products.length !== 1 ? 's' : '' }}
+              </span>
+            </div>
+            <div v-show="expandedFamilies[g.family]" class="list-group list-group-flush">
+              <div v-for="p in g.products" :key="p.id"
+                   class="list-group-item subproduct-row d-flex align-items-center py-3 ps-4"
+                   @click="selectProduct(p)">
+                <div class="brand-col text-primary fw-bold text-uppercase small me-3">
+                  {{ p.brand || 'Sin marca' }}
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                  <h6 class="mb-0">{{ p.name }}</h6>
+                  <p v-if="p.description" class="text-muted small mb-0 text-truncate">
+                    {{ p.description }}
+                  </p>
+                </div>
+                <small class="text-muted d-none d-sm-inline me-2">
+                  <i class="bi bi-search me-1"></i>Buscar precios
+                </small>
+                <i class="bi bi-arrow-right-circle text-primary ms-2"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════ USUARIOS ═══════════════════ -->
+    <section v-if="currentRoute==='users'">
+      <h2 class="mb-4"><i class="bi bi-people me-2 text-primary"></i>Usuarios</h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
+            </div>
+            <div class="card-body">
+              <div v-if="auth.username" class="text-center py-3">
+                <i class="bi bi-person-check-fill display-4 text-success"></i>
+                <p class="mt-2 fw-bold">Sesión activa: {{ auth.username }}</p>
+                <button class="btn btn-outline-danger" @click="logout">
+                  <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+                </button>
+              </div>
+              <form v-else @submit.prevent="login">
+                <div class="mb-3">
+                  <label class="form-label">Usuario</label>
+                  <input v-model="loginForm.username" type="text" class="form-control" required/>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Contraseña</label>
+                  <input v-model="loginForm.password" type="password" class="form-control" required/>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" :disabled="loginLoading">
+                  <span v-if="loginLoading" class="spinner-border spinner-border-sm me-1"></span>
+                  Ingresar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+              <i class="bi bi-person-plus me-2"></i>Registrarse
+            </div>
+            <div class="card-body">
+              <form @submit.prevent="register">
+                <div class="mb-3">
+                  <label class="form-label">Usuario</label>
+                  <input v-model="registerForm.username" type="text" class="form-control" required/>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Email</label>
+                  <input v-model="registerForm.email" type="email" class="form-control" required/>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Contraseña</label>
+                  <input v-model="registerForm.password" type="password" class="form-control" required minlength="6"/>
+                </div>
+                <button type="submit" class="btn btn-success w-100" :disabled="registerLoading">
+                  <span v-if="registerLoading" class="spinner-border spinner-border-sm me-1"></span>
+                  Crear cuenta
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-list-ul me-2"></i>Todos los usuarios</span>
+              <button class="btn btn-sm btn-outline-primary" @click="loadUsers">
+                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div v-if="usersLoading" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+              </div>
+              <table v-else class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr><th>#</th><th>Usuario</th><th>Email</th><th>Registro</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="u in users" :key="u.id">
+                    <td class="text-muted">{{ u.id }}</td>
+                    <td class="fw-bold">{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td class="text-muted small">{{ formatDate(u.createdAt) }}</td>
+                  </tr>
+                  <tr v-if="users.length===0">
+                    <td colspan="4" class="text-center text-muted">Sin usuarios</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ FAVORITOS & ALERTAS ═══════════════════ -->
+    <section v-if="currentRoute==='favorites'">
+      <h2 class="mb-4"><i class="bi bi-heart me-2 text-danger"></i>Favoritos &amp; Alertas</h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-heart-fill text-danger me-2"></i>Mis favoritos</span>
+              <button class="btn btn-sm btn-outline-secondary" @click="loadFavorites">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div v-if="favLoading" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-danger"></div>
+              </div>
+              <ul v-else class="list-group list-group-flush">
+                <li v-for="f in favorites" :key="f.id"
+                    class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>{{ f.product?.name || 'Producto ' + f.productId }}</span>
+                  <button class="btn btn-sm btn-outline-danger" @click="deleteFavorite(f.id)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </li>
+                <li v-if="favorites.length===0" class="list-group-item text-center text-muted">Sin favoritos</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-bell-fill text-warning me-2"></i>Alertas de precio</span>
+              <button class="btn btn-sm btn-outline-secondary" @click="loadAlerts">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <form class="mb-3" @submit.prevent="createAlert">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <input v-model="alertForm.productId" type="number" class="form-control form-control-sm"
+                           placeholder="ID Producto" required/>
+                  </div>
+                  <div class="col-6">
+                    <input v-model="alertForm.targetPrice" type="number" step="0.01"
+                           class="form-control form-control-sm" placeholder="Precio objetivo" required/>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                      <i class="bi bi-plus-circle me-1"></i>Crear alerta
+                    </button>
+                  </div>
+                </div>
+              </form>
+              <ul class="list-group list-group-flush">
+                <li v-for="a in priceAlerts" :key="a.id"
+                    class="list-group-item d-flex justify-content-between align-items-center px-0">
+                  <div>
+                    <span class="fw-bold">Producto {{ a.productId }}</span>
+                    <span class="badge bg-warning text-dark ms-2">&lt; ${{ a.targetPrice }}</span>
+                  </div>
+                  <button class="btn btn-sm btn-outline-danger" @click="deleteAlert(a.id)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </li>
+                <li v-if="priceAlerts.length===0" class="list-group-item text-center text-muted px-0">
+                  Sin alertas configuradas
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ CARRITO ═══════════════════ -->
+    <section v-if="currentRoute==='cart'">
+      <div class="d-flex align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-cart3 me-2 text-primary"></i>Carrito de compra</h2>
+        <span class="badge bg-secondary ms-2">{{ cart.length }}</span>
+      </div>
+
+      <div v-if="cart.length === 0" class="text-center text-muted py-5">
+        <i class="bi bi-cart-x display-4"></i>
+        <p class="mt-2">Tu carrito está vacío.</p>
+        <small>Andá a Categorías, elegí un producto y tildá las tiendas donde querés comprarlo.</small>
+      </div>
+
+      <div v-else class="row g-4">
+        <div class="col-lg-8">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Producto</th><th>Marca</th><th>Tienda</th><th>Ubicación</th>
+                  <th>Precio</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in cart" :key="item.priceId">
+                  <td class="fw-bold">{{ item.productName }}</td>
+                  <td class="text-muted small">{{ item.brand || '—' }}</td>
+                  <td>{{ item.storeName || 'Tienda' }}</td>
+                  <td class="text-muted small">
+                    <i class="bi bi-geo-alt me-1"></i>{{ item.storeAddress || '—' }}
+                  </td>
+                  <td class="fw-bold text-success">
+                    {{ item.currency || 'ARS' }} {{ Number(item.price).toLocaleString('es-AR') }}
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-danger" @click="removeFromCart(item.priceId)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" @click="cart = []">
+            <i class="bi bi-x-lg me-1"></i>Vaciar carrito
+          </button>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <i class="bi bi-receipt me-2"></i>Resumen
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Productos</span>
+                <span class="fw-bold">{{ cart.length }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3 fs-5">
+                <span class="fw-bold">Total</span>
+                <span class="fw-bold text-success">ARS {{ cartTotal.toLocaleString('es-AR') }}</span>
+              </div>
+              <button class="btn btn-success w-100" @click="comprar">
+                <i class="bi bi-bag-check me-1"></i>Comprar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ ADMIN ═══════════════════ -->
+    <section v-if="currentRoute==='admin'">
+      <h2 class="mb-4"><i class="bi bi-gear me-2 text-secondary"></i>Administración</h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between">
+              <span><i class="bi bi-shop me-2"></i>Tiendas</span>
+              <button class="btn btn-sm btn-outline-primary" @click="loadStores"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>#</th><th>Nombre</th><th>URL</th></tr></thead>
+                <tbody>
+                  <tr v-for="s in stores" :key="s.id">
+                    <td class="text-muted">{{ s.id }}</td>
+                    <td class="fw-bold">{{ s.name }}</td>
+                    <td><a :href="s.baseUrl" target="_blank" class="text-truncate d-block" style="max-width:150px">{{ s.baseUrl }}</a></td>
+                  </tr>
+                  <tr v-if="stores.length===0"><td colspan="3" class="text-center text-muted">Sin tiendas</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between">
+              <span><i class="bi bi-robot me-2"></i>Jobs de Scraping</span>
+              <button class="btn btn-sm btn-outline-primary" @click="loadJobs"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead class="table-light"><tr><th>#</th><th>Tienda</th><th>Estado</th><th>Frecuencia</th></tr></thead>
+                <tbody>
+                  <tr v-for="j in scrapingJobs" :key="j.id">
+                    <td class="text-muted">{{ j.id }}</td>
+                    <td>{{ j.store?.name || j.storeId }}</td>
+                    <td><span :class="`badge bg-${statusColor(j.status)}`">{{ j.status }}</span></td>
+                    <td class="text-muted small">{{ j.frequency || '—' }}</td>
+                  </tr>
+                  <tr v-if="scrapingJobs.length===0"><td colspan="4" class="text-center text-muted">Sin jobs</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between">
+              <span><i class="bi bi-journal-text me-2"></i>Logs de Scraping</span>
+              <button class="btn btn-sm btn-outline-secondary" @click="loadLogs"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height:300px;overflow-y:auto">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light sticky-top">
+                    <tr><th>#</th><th>Job</th><th>Estado</th><th>Mensaje</th><th>Fecha</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="l in scrapingLogs" :key="l.id">
+                      <td class="text-muted">{{ l.id }}</td>
+                      <td>{{ l.scrapingJobId }}</td>
+                      <td><span :class="`badge bg-${statusColor(l.status)}`">{{ l.status }}</span></td>
+                      <td class="small text-truncate" style="max-width:200px">{{ l.message }}</td>
+                      <td class="text-muted small">{{ formatDate(l.createdAt) }}</td>
+                    </tr>
+                    <tr v-if="scrapingLogs.length===0"><td colspan="5" class="text-center text-muted">Sin logs</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════ MODAL COMPARAR PRECIOS ═══════════════════ -->
+  <!-- Se abre desde cualquier pantalla (Categorías, Lista de Precios, etc.)
+       al seleccionar un producto puntual. -->
+  <div v-if="selectedProduct" class="modal-overlay" @click.self="selectedProduct=null">
+    <div class="modal-box">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h5 class="mb-0">{{ selectedProduct.name }}</h5>
+          <small class="text-muted">{{ selectedProduct.brand }}</small>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" @click="selectedProduct=null">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <p class="text-muted small mb-3">{{ selectedProduct.description || 'Sin descripción' }}</p>
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0"><i class="bi bi-sort-numeric-down me-1"></i>Comparar precios (menor a mayor)</h6>
+        <div v-if="pricesMode==='nearby'" class="d-flex align-items-center gap-1" style="width:170px">
+          <label class="small text-muted mb-0">Radio</label>
+          <input type="range" min="1" max="50" step="1" class="form-range"
+                 v-model.number="radiusKm" @change="onRadiusChange"/>
+          <span class="small text-muted">{{ radiusKm }}km</span>
+        </div>
+      </div>
+
+      <!-- Estado de ubicación -->
+      <div v-if="userLocation.status==='loading'" class="small text-muted mb-2">
+        <i class="bi bi-geo-alt me-1"></i>Obteniendo tu ubicación…
+      </div>
+      <div v-else-if="userLocation.status==='denied'" class="small text-warning mb-2">
+        <i class="bi bi-geo-alt-fill me-1"></i>Ubicación no disponible — mostrando todas las tiendas sin distancia.
+      </div>
+      <div v-else-if="pricesMode==='nearby'" class="small text-success mb-2">
+        <i class="bi bi-geo-alt-fill me-1"></i>
+        <span v-if="!pricesLoading">
+          {{ prices.length }} tienda{{ prices.length !== 1 ? 's' : '' }} dentro de {{ radiusKm }} km de tu ubicación.
+        </span>
+        <span v-else>Buscando tiendas dentro de {{ radiusKm }} km…</span>
+      </div>
+
+      <div v-if="pricesLoading" class="text-center py-3">
+        <div class="spinner-border spinner-border-sm text-primary"></div>
+      </div>
+      <div v-else-if="prices.length===0" class="text-muted small">
+        Sin precios registrados
+        <span v-if="pricesMode==='nearby'">dentro de {{ radiusKm }} km. Probá ampliar el radio.</span>
+      </div>
+      <div v-else>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <small class="text-muted">
+            <i class="bi bi-cart-check me-1"></i>{{ productItemsInCart.length }} en el carrito de este producto
+          </small>
+          <div class="d-flex gap-2">
+            <button v-if="productItemsInCart.length > 0" class="btn btn-sm btn-outline-secondary" @click="clearProductFromCart">
+              <i class="bi bi-x-lg me-1"></i>Quitar del carrito
+            </button>
+            <button v-if="cart.length > 0" class="btn btn-sm btn-outline-success" @click="selectedProduct=null; navigate('cart')">
+              <i class="bi bi-cart3 me-1"></i>Ver carrito ({{ cart.length }})
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:2.5rem"></th>
+                <th>Tienda</th><th>Ubicación</th>
+                <th v-if="pricesMode==='nearby'">Distancia</th>
+                <th>Precio</th><th>Actualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(price, idx) in prices" :key="price.id" :class="{'table-success': idx===0}">
+                <td>
+                  <input type="checkbox" class="form-check-input"
+                         :checked="isInCart(price.id)"
+                         @change="togglePriceSelection(price)"/>
+                </td>
+                <td>
+                  {{ price.storeName || 'Tienda' }}
+                  <span v-if="idx===0" class="badge bg-success ms-1">Más barato</span>
+                </td>
+                <td class="text-muted small">
+                  <i class="bi bi-geo-alt me-1"></i>{{ price.storeAddress || '—' }}
+                </td>
+                <td v-if="pricesMode==='nearby'" class="text-muted small">
+                  {{ price.distanceKm != null ? price.distanceKm.toFixed(1) + ' km' : '—' }}
+                </td>
+                <td class="fw-bold" :class="idx===0 ? 'text-success' : 'text-body'">
+                  {{ price.currency || 'ARS' }} {{ Number(price.price).toLocaleString('es-AR') }}
+                </td>
+                <td class="text-muted small">{{ formatDate(price.recordedAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center text-muted py-3 border-top mt-4">
+    <small>API Precios &copy; 2025 · Spring Boot 3.4.1 + Vue 3</small>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

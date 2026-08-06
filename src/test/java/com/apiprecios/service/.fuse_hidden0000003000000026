@@ -1,0 +1,262 @@
+package com.apiprecios.service;
+
+import com.apiprecios.entity.Product;
+import com.apiprecios.entity.Store;
+import com.apiprecios.exception.ResourceNotFoundException;
+import com.apiprecios.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("ProductService")
+class ProductServiceTest {
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
+    private StoreService storeService;
+
+    @InjectMocks
+    private ProductService productService;
+
+    private Store mercado;
+    private Product notebook;
+
+    @BeforeEach
+    void setUp() {
+        mercado = Store.builder().name("MercadoLibre").url("https://ml.com").build();
+        notebook = Product.builder()
+                .name("Notebook Dell")
+                .description("Intel Core i5, 8GB RAM")
+                .store(mercado)
+                .build();
+    }
+
+    // ─── findAll ──────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findAll: delega al repositorio")
+    void findAll_delegatesToRepository() {
+        when(productRepository.findAll()).thenReturn(List.of(notebook));
+
+        assertThat(productService.findAll()).containsExactly(notebook);
+        verify(productRepository).findAll();
+    }
+
+    // ─── findById ─────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findById: retorna producto cuando existe")
+    void findById_returnsProduct() {
+        when(productRepository.findById(1)).thenReturn(Optional.of(notebook));
+
+        assertThat(productService.findById(1)).isEqualTo(notebook);
+    }
+
+    @Test
+    @DisplayName("findById: lanza ResourceNotFoundException cuando no existe")
+    void findById_throwsWhenNotFound() {
+        when(productRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.findById(99))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    // ─── findByIdWithStore ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findByIdWithStore: retorna producto con tienda cargada")
+    void findByIdWithStore_returnsProductWithStore() {
+        when(productRepository.findByIdWithStore(1)).thenReturn(notebook);
+
+        Product result = productService.findByIdWithStore(1);
+
+        assertThat(result).isEqualTo(notebook);
+        assertThat(result.getStore()).isEqualTo(mercado);
+    }
+
+    @Test
+    @DisplayName("findByIdWithStore: lanza ResourceNotFoundException cuando repo retorna null")
+    void findByIdWithStore_throwsWhenNull() {
+        when(productRepository.findByIdWithStore(99)).thenReturn(null);
+
+        assertThatThrownBy(() -> productService.findByIdWithStore(99))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    // ─── findByStore ──────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findByStore: valida que la tienda exista y retorna productos")
+    void findByStore_validatesStoreAndReturnsProducts() {
+        when(storeService.findById(1)).thenReturn(mercado);
+        when(productRepository.findByStoreId(1)).thenReturn(List.of(notebook));
+
+        List<Product> result = productService.findByStore(1);
+
+        assertThat(result).containsExactly(notebook);
+        verify(storeService).findById(1);
+    }
+
+    @Test
+    @DisplayName("findByStore: lanza excepción si la tienda no existe")
+    void findByStore_throwsWhenStoreNotFound() {
+        when(storeService.findById(99))
+                .thenThrow(new ResourceNotFoundException("Store", 99));
+
+        assertThatThrownBy(() -> productService.findByStore(99))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(productRepository, never()).findByStoreId(anyLong());
+    }
+
+    // ─── search ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("search: retorna todos cuando keyword es nulo")
+    void search_returnsAllWhenKeywordNull() {
+        when(productRepository.findAll()).thenReturn(List.of(notebook));
+
+        List<Product> result = productService.search(null);
+
+        assertThat(result).containsExactly(notebook);
+        verify(productRepository, never()).searchByKeyword(anyString());
+    }
+
+    @Test
+    @DisplayName("search: retorna todos cuando keyword está en blanco")
+    void search_returnsAllWhenKeywordBlank() {
+        when(productRepository.findAll()).thenReturn(List.of(notebook));
+
+        List<Product> result = productService.search("   ");
+
+        assertThat(result).containsExactly(notebook);
+        verify(productRepository, never()).searchByKeyword(anyString());
+    }
+
+    @Test
+    @DisplayName("search: delega a searchByKeyword con keyword trimmed")
+    void search_delegatesToKeywordSearchWithTrimmedKeyword() {
+        when(productRepository.searchByKeyword("dell")).thenReturn(List.of(notebook));
+
+        List<Product> result = productService.search("  dell  ");
+
+        assertThat(result).containsExactly(notebook);
+        verify(productRepository).searchByKeyword("dell");
+    }
+
+    @Test
+    @DisplayName("search: retorna lista vacía cuando no hay coincidencias")
+    void search_returnsEmptyWhenNoMatches() {
+        when(productRepository.searchByKeyword("xyz")).thenReturn(List.of());
+
+        assertThat(productService.search("xyz")).isEmpty();
+    }
+
+    // ─── create ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("create: valida que la tienda exista y guarda el producto")
+    void create_validatesStoreAndSaves() {
+        notebook.getStore().setId(1);
+
+        when(storeService.findById(1)).thenReturn(mercado);
+        when(productRepository.save(notebook)).thenReturn(notebook);
+
+        Product result = productService.create(notebook);
+
+        assertThat(result).isEqualTo(notebook);
+        verify(storeService).findById(1);
+        verify(productRepository).save(notebook);
+    }
+
+    @Test
+    @DisplayName("create: lanza excepción si la tienda no existe")
+    void create_throwsWhenStoreNotFound() {
+        notebook.getStore().setId(99);
+
+        when(storeService.findById(99))
+                .thenThrow(new ResourceNotFoundException("Store", 99));
+
+        assertThatThrownBy(() -> productService.create(notebook))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(productRepository, never()).save(any());
+    }
+
+    // ─── update ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("update: actualiza campos y guarda")
+    void update_updatesFieldsAndSaves() {
+        Store falabella = Store.builder().name("Falabella").url("https://falabella.com").build();
+        falabella.setId(2);
+
+        Product data = Product.builder()
+                .name("Notebook HP")
+                .description("AMD Ryzen 5")
+                .imageUrl("https://img.com/hp.jpg")
+                .url("https://falabella.com/hp")
+                .store(falabella)
+                .build();
+
+        when(productRepository.findById(1)).thenReturn(Optional.of(notebook));
+        when(storeService.findById(2)).thenReturn(falabella);
+        when(productRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Product result = productService.update(1, data);
+
+        assertThat(result.getName()).isEqualTo("Notebook HP");
+        assertThat(result.getDescription()).isEqualTo("AMD Ryzen 5");
+        assertThat(result.getStore()).isEqualTo(falabella);
+    }
+
+    @Test
+    @DisplayName("update: lanza ResourceNotFoundException si producto no existe")
+    void update_throwsWhenProductNotFound() {
+        when(productRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.update(99, notebook))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ─── delete ───────────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("delete: elimina el producto existente")
+    void delete_removesProduct() {
+        when(productRepository.findById(1)).thenReturn(Optional.of(notebook));
+
+        productService.delete(1);
+
+        verify(productRepository).delete(notebook);
+    }
+
+    @Test
+    @DisplayName("delete: lanza ResourceNotFoundException si no existe")
+    void delete_throwsWhenNotFound() {
+        when(productRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.delete(99))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(productRepository, never()).delete(any());
+    }
+}

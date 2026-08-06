@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════════════════════════
+# Levanta los 3 componentes: PostgreSQL + backend + web-client.
+#
+# Uso: docker compose up --build
+#
+# IMPORTANTE: la base arranca vacía. La app usa ddl-auto: validate
+# (no crea tablas solo), así que después del primer "up" hay que
+# cargar el esquema y los datos corriendo, en orden, los scripts
+# de src/main/resources/ (schema-completo.sql, insert-products.sql,
+# insert-prices.sql, etc.) contra localhost:5433 (¡ojo, 5433, no
+# 5432!) con DBeaver u otro cliente.
+#
+# Se usa el puerto 5433 en el host porque el 5432 ya lo ocupa el
+# Postgres nativo instalado fuera de Docker. Adentro del contenedor
+# y entre servicios (db:5432) todo sigue siendo el puerto estándar,
+# esto solo cambia cómo se accede desde tu Windows.
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  db:
+    image: postgres:17
+    container_name: apiprecios-db
+    environment:
+      POSTGRES_DB: apiPrecios
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - apiprecios-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: apiprecios-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/apiPrecios
+      DB_USER: postgres
+      DB_PASSWORD: password
+    ports:
+      - "8081:8081"
+
+  web-client:
+    build: ./web-client
+    container_name: apiprecios-web-client
+    depends_on:
+      - backend
+    environment:
+      API_BACKEND_URL: http://backend:8081
+    ports:
+      - "8082:8082"
+
+volumes:
+  apiprecios-db-data:

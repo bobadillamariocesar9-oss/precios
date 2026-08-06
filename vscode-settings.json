@@ -1,0 +1,24 @@
+{
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-21",
+            "path": "",
+            "default": true
+        }
+    ],
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.format.enabled": true,
+    "java.saveActions.organizeImports": true,
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java"
+    },
+    "maven.executable.preferMavenWrapper": true,
+    "files.exclude": {
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
+    }
+}

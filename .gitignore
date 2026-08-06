@@ -1,0 +1,37 @@
+# ── Maven ────────────────────────────────────────────────
+target/
+web-client/target/
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# ── IDEs ─────────────────────────────────────────────────
+.idea/
+*.iml
+web-client/.idea/
+web-client/*.iml
+.classpath
+.project
+.settings/
+.apt_generated/
+.apt_generated_tests/
+web-client/out/
+out/
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ── Logs / OS ────────────────────────────────────────────
+*.log
+.DS_Store
+Thumbs.db
+
+# ── Variables de entorno / secretos ─────────────────────
+.env
+.env.local
+
+# ── Node (por si el web-client suma build tools) ────────
+node_modules/
+npm-debug.log*
