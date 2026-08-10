@@ -3,7 +3,7 @@ spring:
     name: api-precios
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/apiPrecios
+    url: jdbc:postgresql://dpg-d9qj44c9v7es73f39jj0-a/apiPrecios
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
