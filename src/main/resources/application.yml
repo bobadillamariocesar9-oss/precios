@@ -3,7 +3,7 @@ spring:
     name: api-precios
 
   datasource:
-    url: jdbc:postgresql://dpg-d9qj44c9v7es73f39jj0-a/apiPrecios
+    url: jdbc:postgresql://apidb_vt9g_user:2ttkHrIDQgAEtm2qYHpRpYb8IUeH5BeN@dpg-daavtaf40ujc739dh290-a/apidb_vt9g
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
