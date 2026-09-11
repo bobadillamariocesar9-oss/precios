@@ -3,7 +3,11 @@ spring:
     name: api-precios
 
   datasource:
-    url: jdbc:postgresql://apidb_vt9g_user:2ttkHrIDQgAEtm2qYHpRpYb8IUeH5BeN@dpg-daavtaf40ujc739dh290-a/apidb_vt9g
+
+    url: jdbc:postgresql://apiprecios_egag_user:86Zr6sDIyghJuXFeFbPuRSEKnm9J1z8v@dpg-dah1g8pt0dsc73e6m4hg-a/apiprecios_egag
+
+
+
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
@@ -35,7 +39,7 @@ spring:
       write-dates-as-timestamps: false     # fechas en formato ISO-8601
 
 server:
-  port: 8081
+  port: ${PORT:8081}
   error:
     include-message: always
     include-binding-errors: always
@@ -47,7 +51,7 @@ server:
 # Orígenes permitidos para CORS
 app:
   cors:
-    allowed-origins: http://localhost:3000,http://localhost:4200,http://localhost:5173,http://localhost:8080
+    allowed-origins: ${http://localhost:3000,http://localhost:4200,http://localhost:5173,http://localhost:8080}
 
 springdoc:
   api-docs:
