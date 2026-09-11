@@ -21,7 +21,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate      # valida que entidades y tablas coincidan al arrancar
+      ddl-auto: update     # valida que entidades y tablas coincidan al arrancar
     show-sql: false           # el SQL ya se loguea abajo con org.hibernate.SQL
     properties:
       hibernate:
