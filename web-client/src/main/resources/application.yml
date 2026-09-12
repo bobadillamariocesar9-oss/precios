@@ -1,9 +1,9 @@
 server:
-  port: 8082
+  port: {PORT:8082}
 
 api:
   backend:
-    url: http://localhost:8081
+    url: ${API_BACKEND_URL:https://precios-3.onrender.com}
 
 spring:
   application:
