@@ -4,7 +4,7 @@ spring:
 
   datasource:
 
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://apiprecios_egag_user:86Zr6sDIyghJuXFeFbPuRSEKnm9J1z8v@dpg-dah1g8pt0dsc73e6m4hg-a/apiprecios_egag}
+    url: ${SPRING_DATASOURCE_URL}
 
 
 
