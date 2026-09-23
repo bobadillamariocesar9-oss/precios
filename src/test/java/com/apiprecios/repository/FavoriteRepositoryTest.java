@@ -50,7 +50,7 @@ class FavoriteRepositoryTest extends AbstractRepositoryTest {
                 .username("ana").email("ana@test.com").password("pass").build());
 
         Store store = storeRepository.save(Store.builder()
-                .name("MercadoLibre").url("https://ml.com").build());
+                .name("MercadoLibre").baseUrl("https://ml.com").build());
 
         notebook = productRepository.save(Product.builder()
                 .name("Notebook").store(store).build());
