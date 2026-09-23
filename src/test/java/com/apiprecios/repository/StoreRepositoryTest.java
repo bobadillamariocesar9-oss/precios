@@ -27,19 +27,19 @@ class StoreRepositoryTest extends AbstractRepositoryTest {
 
         mercado = storeRepository.save(Store.builder()
                 .name("MercadoLibre")
-                .baseUrl("https://www.mercadolibre.com")
+                .url("https://www.mercadolibre.com")
                 .logoUrl("https://cdn.mercadolibre.com/logo.png")
                 .build());
 
         falabella = storeRepository.save(Store.builder()
                 .name("Falabella")
-                .baseUrl("https://www.falabella.com")
+                .url("https://www.falabella.com")
                 .logoUrl("https://cdn.falabella.com/logo.png")
                 .build());
 
         storeRepository.save(Store.builder()
                 .name("Mercado Pago")
-                .baseUrl("https://www.mercadopago.com")
+                .url("https://www.mercadopago.com")
                 .build());
     }
 
@@ -50,7 +50,7 @@ class StoreRepositoryTest extends AbstractRepositoryTest {
     void save_persistsStoreWithId() {
         Store store = storeRepository.save(Store.builder()
                 .name("Ripley")
-                .baseUrl("https://www.ripley.com")
+                .url("https://www.ripley.com")
                 .build());
 
         assertThat(store.getId()).isNotNull();
@@ -72,7 +72,7 @@ class StoreRepositoryTest extends AbstractRepositoryTest {
     void findById_returnsStore() {
         Optional<Store> found = storeRepository.findById(mercado.getId());
         assertThat(found).isPresent();
-        assertThat(found.get().getBaseUrl()).isEqualTo("https://www.mercadolibre.com");
+        assertThat(found.get().getUrl()).isEqualTo("https://www.mercadolibre.com");
     }
 
     @Test
@@ -145,8 +145,8 @@ class StoreRepositoryTest extends AbstractRepositoryTest {
     @Test
     @DisplayName("update: modifica la URL de una tienda")
     void update_changesUrl() {
-        mercado.setBaseUrl("https://www.mercadolibre.com.ar");
+        mercado.setUrl("https://www.mercadolibre.com.ar");
         Store saved = storeRepository.save(mercado);
-        assertThat(saved.getBaseUrl()).isEqualTo("https://www.mercadolibre.com.ar");
+        assertThat(saved.getUrl()).isEqualTo("https://www.mercadolibre.com.ar");
     }
 }

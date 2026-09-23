@@ -38,13 +38,13 @@ class ScrapingLogRepositoryTest extends AbstractRepositoryTest {
         storeRepository.deleteAll();
 
         Store store = storeRepository.save(Store.builder()
-                .name("MercadoLibre").baseUrl("https://ml.com").build());
+                .name("MercadoLibre").url("https://ml.com").build());
 
         jobA = scrapingJobRepository.save(ScrapingJob.builder()
-                .store(store).baseUrl("https://ml.com/electronica")
+                .store(store).url("https://ml.com/electronica")
                 .status(Status.COMPLETED).build());
         jobB = scrapingJobRepository.save(ScrapingJob.builder()
-                .store(store).baseUrl("https://ml.com/hogar")
+                .store(store).url("https://ml.com/hogar")
                 .status(Status.FAILED).build());
 
         // jobA: INFO → WARN → ERROR (en orden temporal ascendente)
@@ -125,7 +125,7 @@ class ScrapingLogRepositoryTest extends AbstractRepositoryTest {
     void findByScrapingJobId_returnsEmptyForJobWithNoLogs() {
         Store store = storeRepository.findAll().get(0);
         ScrapingJob jobSinLogs = scrapingJobRepository.save(ScrapingJob.builder()
-                .store(store).baseUrl("https://ml.com/sinlogs")
+                .store(store).url("https://ml.com/sinlogs")
                 .status(Status.PENDING).build());
         assertThat(scrapingLogRepository.findByScrapingJobId(jobSinLogs.getId())).isEmpty();
     }

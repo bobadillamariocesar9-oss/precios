@@ -42,9 +42,9 @@ class PriceRepositoryTest extends AbstractRepositoryTest {
         storeRepository.deleteAll();
 
         mercado = storeRepository.save(Store.builder()
-                .name("MercadoLibre").baseUrl("https://www.mercadolibre.com").build());
+                .name("MercadoLibre").url("https://www.mercadolibre.com").build());
         falabella = storeRepository.save(Store.builder()
-                .name("Falabella").baseUrl("https://www.falabella.com").build());
+                .name("Falabella").url("https://www.falabella.com").build());
 
         notebook = productRepository.save(Product.builder()
                 .name("Notebook Dell").store(mercado).build());

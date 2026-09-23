@@ -32,26 +32,26 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
         storeRepository.deleteAll();
 
         mercado = storeRepository.save(Store.builder()
-                .name("MercadoLibre").baseUrl("https://ml.com").build());
+                .name("MercadoLibre").url("https://ml.com").build());
         falabella = storeRepository.save(Store.builder()
-                .name("Falabella").baseUrl("https://falabella.com").build());
+                .name("Falabella").url("https://falabella.com").build());
 
         // MercadoLibre: 1 PENDING, 1 RUNNING, 1 COMPLETED
         scrapingJobRepository.save(ScrapingJob.builder()
                 .store(mercado)
-                .baseUrl("https://ml.com/electronica")
+                .url("https://ml.com/electronica")
                 .status(Status.PENDING)
                 .scheduledAt(LocalDateTime.now().plusHours(1))
                 .build());
         scrapingJobRepository.save(ScrapingJob.builder()
                 .store(mercado)
-                .baseUrl("https://ml.com/computacion")
+                .url("https://ml.com/computacion")
                 .status(Status.RUNNING)
                 .startedAt(LocalDateTime.now())
                 .build());
         scrapingJobRepository.save(ScrapingJob.builder()
                 .store(mercado)
-                .baseUrl("https://ml.com/celulares")
+                .url("https://ml.com/celulares")
                 .status(Status.COMPLETED)
                 .startedAt(LocalDateTime.now().minusHours(2))
                 .finishedAt(LocalDateTime.now().minusHours(1))
@@ -60,13 +60,13 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
         // Falabella: 1 PENDING, 1 FAILED
         scrapingJobRepository.save(ScrapingJob.builder()
                 .store(falabella)
-                .baseUrl("https://falabella.com/tecnologia")
+                .url("https://falabella.com/tecnologia")
                 .status(Status.PENDING)
                 .scheduledAt(LocalDateTime.now().plusHours(2))
                 .build());
         scrapingJobRepository.save(ScrapingJob.builder()
                 .store(falabella)
-                .baseUrl("https://falabella.com/hogar")
+                .url("https://falabella.com/hogar")
                 .status(Status.FAILED)
                 .startedAt(LocalDateTime.now().minusHours(3))
                 .finishedAt(LocalDateTime.now().minusHours(3).plusMinutes(5))
@@ -80,7 +80,7 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
     void save_persistsJobWithDefaultPendingStatus() {
         ScrapingJob job = scrapingJobRepository.save(ScrapingJob.builder()
                 .store(mercado)
-                .baseUrl("https://ml.com/nuevo")
+                .url("https://ml.com/nuevo")
                 .build());
 
         assertThat(job.getId()).isNotNull();
@@ -93,7 +93,7 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
     void save_persistsJobWithExplicitStatus() {
         ScrapingJob job = scrapingJobRepository.save(ScrapingJob.builder()
                 .store(falabella)
-                .baseUrl("https://falabella.com/nuevo")
+                .url("https://falabella.com/nuevo")
                 .status(Status.RUNNING)
                 .build());
 
@@ -123,7 +123,7 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
     void findByStatus_returnsRunningJob() {
         List<ScrapingJob> running = scrapingJobRepository.findByStatus(Status.RUNNING);
         assertThat(running).hasSize(1);
-        assertThat(running.get(0).getBaseUrl()).isEqualTo("https://ml.com/computacion");
+        assertThat(running.get(0).getUrl()).isEqualTo("https://ml.com/computacion");
     }
 
     @Test
@@ -164,7 +164,7 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
     @DisplayName("findByStoreId: retorna vacío si tienda sin jobs")
     void findByStoreId_returnsEmptyForStoreWithNoJobs() {
         Store nueva = storeRepository.save(Store.builder()
-                .name("Ripley").baseUrl("https://ripley.com").build());
+                .name("Ripley").url("https://ripley.com").build());
         assertThat(scrapingJobRepository.findByStoreId(nueva.getId())).isEmpty();
     }
 
@@ -176,7 +176,7 @@ class ScrapingJobRepositoryTest extends AbstractRepositoryTest {
         List<ScrapingJob> result = scrapingJobRepository
                 .findByStoreIdAndStatus(mercado.getId(), Status.PENDING);
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getBaseUrl()).isEqualTo("https://ml.com/electronica");
+        assertThat(result.get(0).getUrl()).isEqualTo("https://ml.com/electronica");
     }
 
     @Test

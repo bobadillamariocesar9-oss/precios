@@ -38,11 +38,11 @@ class ScrapingLogServiceTest {
 
     @BeforeEach
     void setUp() {
-        Store store = Store.builder().name("MercadoLibre").baseUrl("https://ml.com").build();
+        Store store = Store.builder().name("MercadoLibre").url("https://ml.com").build();
         store.setId(1);
 
         job = ScrapingJob.builder()
-                .store(store).baseUrl("https://ml.com/electronica")
+                .store(store).url("https://ml.com/electronica")
                 .status(Status.RUNNING).build();
         job.setId(1);
 
