@@ -277,31 +277,35 @@ createApp({
 
     // Pide la ubicación al navegador (una sola vez, se reutiliza después)
     requestUserLocation() {
-      if (this.userLocation.status === 'granted') return Promise.resolve(this.userLocation);
       if (!navigator.geolocation) {
         this.userLocation.status = 'unsupported';
         return Promise.resolve(this.userLocation);
       }
+
       this.userLocation.status = 'loading';
+
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            this.userLocation = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              status: 'granted',
-            };
-            resolve(this.userLocation);
-          },
-          () => {
-            this.userLocation.status = 'denied';
-            resolve(this.userLocation);
-          },
-          { timeout: 8000 }
+            (pos) => {
+              this.userLocation = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                status: 'granted',
+              };
+              resolve(this.userLocation);
+            },
+            () => {
+              this.userLocation.status = 'denied';
+              resolve(this.userLocation);
+            },
+            {
+              enableHighAccuracy: true,
+              maximumAge: 0,
+              timeout: 10000
+            }
         );
       });
     },
-
     // Carga precios del producto seleccionado: intenta por radio (geolocalización),
     // y si no hay ubicación disponible, cae a la comparación general.
     async loadPricesForSelectedProduct() {
