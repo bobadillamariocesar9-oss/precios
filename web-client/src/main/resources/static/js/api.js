@@ -38,6 +38,12 @@ const API = {
   comparePricesNearby: (id, lat, lng, radiusKm) =>
     API._fetch('GET', `/prices/product/${id}/compare/nearby?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`),
 
+  // ── Comparador de cesta (API propia Java + IA opcional) ────────────────────
+  compareBasket: (productIds) =>
+    API._fetch('POST', '/shopping-advice/compare', { productIds }),
+  explainBasket: (productIds) =>
+    API._fetch('POST', '/shopping-advice/explain', { productIds }),
+
   // ── Tiendas ────────────────────────────────────────────────────────────────
   getStores: () => API._fetch('GET', '/stores'),
 
