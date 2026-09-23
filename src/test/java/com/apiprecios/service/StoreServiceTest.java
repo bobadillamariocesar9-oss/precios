@@ -35,7 +35,7 @@ class StoreServiceTest {
     void setUp() {
         mercado = Store.builder()
                 .name("MercadoLibre")
-                .url("https://ml.com")
+                .baseUrl("https://ml.com")
                 .logoUrl("https://ml.com/logo.png")
                 .build();
     }
@@ -130,7 +130,7 @@ class StoreServiceTest {
     void update_updatesAndSaves() {
         Store data = Store.builder()
                 .name("MercadoLibre AR")
-                .url("https://www.mercadolibre.com.ar")
+                .baseUrl("https://www.mercadolibre.com.ar")
                 .logoUrl("https://ml.com/logo-ar.png")
                 .build();
 
@@ -141,7 +141,7 @@ class StoreServiceTest {
         Store result = storeService.update(1, data);
 
         assertThat(result.getName()).isEqualTo("MercadoLibre AR");
-        assertThat(result.getUrl()).isEqualTo("https://www.mercadolibre.com.ar");
+        assertThat(result.getBaseUrl()).isEqualTo("https://www.mercadolibre.com.ar");
     }
 
     @Test
@@ -149,7 +149,7 @@ class StoreServiceTest {
     void update_skipsNameValidationWhenUnchanged() {
         Store data = Store.builder()
                 .name("MercadoLibre")    // mismo nombre
-                .url("https://ml.com.ar")
+                .baseUrl("https://ml.com.ar")
                 .build();
 
         when(storeRepository.findById(1)).thenReturn(Optional.of(mercado));
@@ -163,7 +163,7 @@ class StoreServiceTest {
     @Test
     @DisplayName("update: lanza BadRequestException si nuevo nombre ya existe")
     void update_throwsWhenNewNameConflicts() {
-        Store data = Store.builder().name("Falabella").url("https://falabella.com").build();
+        Store data = Store.builder().name("Falabella").baseUrl("https://falabella.com").build();
         Store falabella = Store.builder().name("Falabella").build();
 
         when(storeRepository.findById(1)).thenReturn(Optional.of(mercado));
