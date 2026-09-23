@@ -38,19 +38,19 @@ class ScrapingJobServiceTest {
 
     @BeforeEach
     void setUp() {
-        mercado = Store.builder().name("MercadoLibre").url("https://ml.com").build();
+        mercado = Store.builder().name("MercadoLibre").baseUrl("https://ml.com").build();
         mercado.setId(1);
 
         pendingJob = ScrapingJob.builder()
-                .store(mercado).url("https://ml.com/electronica")
+                .store(mercado).baseUrl("https://ml.com/electronica")
                 .status(Status.PENDING).build();
 
         runningJob = ScrapingJob.builder()
-                .store(mercado).url("https://ml.com/computacion")
+                .store(mercado).baseUrl("https://ml.com/computacion")
                 .status(Status.RUNNING).build();
 
         completedJob = ScrapingJob.builder()
-                .store(mercado).url("https://ml.com/celulares")
+                .store(mercado).baseUrl("https://ml.com/celulares")
                 .status(Status.COMPLETED).build();
     }
 
@@ -134,7 +134,7 @@ class ScrapingJobServiceTest {
     void create_setsStatusPendingAndSaves() {
         ScrapingJob newJob = ScrapingJob.builder()
                 .store(mercado)
-                .url("https://ml.com/nuevo")
+                .baseUrl("https://ml.com/nuevo")
                 .status(Status.RUNNING)   // el servicio debe sobreescribir a PENDING
                 .build();
 
