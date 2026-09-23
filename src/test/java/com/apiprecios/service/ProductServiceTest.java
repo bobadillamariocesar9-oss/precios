@@ -39,7 +39,7 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        mercado = Store.builder().name("MercadoLibre").url("https://ml.com").build();
+        mercado = Store.builder().name("MercadoLibre").baseUrl("https://ml.com").build();
         notebook = Product.builder()
                 .name("Notebook Dell")
                 .description("Intel Core i5, 8GB RAM")
@@ -206,14 +206,14 @@ class ProductServiceTest {
     @Test
     @DisplayName("update: actualiza campos y guarda")
     void update_updatesFieldsAndSaves() {
-        Store falabella = Store.builder().name("Falabella").url("https://falabella.com").build();
+        Store falabella = Store.builder().name("Falabella").baseUrl("https://falabella.com").build();
         falabella.setId(2);
 
         Product data = Product.builder()
                 .name("Notebook HP")
                 .description("AMD Ryzen 5")
                 .imageUrl("https://img.com/hp.jpg")
-                .url("https://falabella.com/hp")
+                .baseUrl("https://falabella.com/hp")
                 .store(falabella)
                 .build();
 
