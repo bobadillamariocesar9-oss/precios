@@ -34,15 +34,15 @@ class ProductRepositoryTest extends AbstractRepositoryTest {
         storeRepository.deleteAll();
 
         mercado = storeRepository.save(Store.builder()
-                .name("MercadoLibre").url("https://www.mercadolibre.com").build());
+                .name("MercadoLibre").baseUrl("https://www.mercadolibre.com").build());
         falabella = storeRepository.save(Store.builder()
-                .name("Falabella").url("https://www.falabella.com").build());
+                .name("Falabella").baseUrl("https://www.falabella.com").build());
 
         notebook = productRepository.save(Product.builder()
                 .name("Notebook Dell Inspiron 15")
                 .description("Laptop con procesador Intel Core i5, 8GB RAM")
                 .imageUrl("https://img.com/notebook.jpg")
-                .url("https://www.mercadolibre.com/notebook-dell")
+                .baseUrl("https://www.mercadolibre.com/notebook-dell")
                 .store(mercado)
                 .build());
 
@@ -114,7 +114,7 @@ class ProductRepositoryTest extends AbstractRepositoryTest {
     @DisplayName("findByStoreId: retorna lista vacía si tienda no tiene productos")
     void findByStoreId_returnsEmptyForStoreWithNoProducts() {
         Store nueva = storeRepository.save(Store.builder()
-                .name("Ripley").url("https://ripley.com").build());
+                .name("Ripley").baseUrl("https://ripley.com").build());
         assertThat(productRepository.findByStoreId(nueva.getId())).isEmpty();
     }
 
