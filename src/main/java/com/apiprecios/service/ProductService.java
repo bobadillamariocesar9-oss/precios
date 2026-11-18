@@ -61,6 +61,9 @@ public class ProductService {
         Product product = findById(id);
         product.setName(data.getName());
         product.setBrand(data.getBrand());
+        if (data.getEan() != null) {
+            product.setEan(data.getEan());
+        }
         product.setDescription(data.getDescription());
         product.setCategory(data.getCategory());
         product.setImageUrl(data.getImageUrl());
