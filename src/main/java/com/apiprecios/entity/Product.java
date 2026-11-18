@@ -29,6 +29,10 @@ public class Product {
     @Column(length = 150)
     private String brand;
 
+    // EAN/GTIN is required before any SEPA price is imported.
+    @Column(name = "ean", length = 14)
+    private String ean;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
