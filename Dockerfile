@@ -19,12 +19,12 @@ RUN mvn -B clean package -DskipTests -Dmaven.test.skip=true
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Optional browser dependency for the explicitly enabled Coto connector.
-# Simulation mode does not start the browser.
-RUN apk add --no-cache chromium chromium-chromedriver
-ENV CHROME_BIN=/usr/bin/chromium-browser
-ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
-
+# NOTA sobre el scraper (CotoScraperService / Selenium):
+# esta imagen NO incluye Chrome/Chromium, así que el endpoint
+# POST /api/scraper/coto/run va a fallar dentro del contenedor.
+# Si lo necesitás, agregá antes del ENTRYPOINT:
+#   RUN apk add --no-cache chromium chromium-chromedriver
+#   ENV CHROME_BIN=/usr/bin/chromium-browser
 
 COPY --from=build /app/target/api-precios-0.0.1-SNAPSHOT.jar app.jar
 
