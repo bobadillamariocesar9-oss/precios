@@ -41,8 +41,6 @@ spring:
 server:
   port: ${PORT:8082}
 api:
-  backend:
-    url: ${API_BACKEND_URL:postgresql://neondb_owner:npg_Yfun2y6EPOzL@ep-withered-king-bdoy8apb-pooler.c-8.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require}
   error:
     include-message: always
     include-binding-errors: always
@@ -55,6 +53,11 @@ api:
 app:
   cors:
     allowed-origins: ${http://localhost:3000,http://localhost:4200,http://localhost:5173,http://localhost:8080}
+
+agent:
+  api-token: ${AGENT_API_TOKEN:}
+  # Keep disabled until permitted sources, Chrome and matching are verified.
+  live-scraping-enabled: ${AGENT_LIVE_SCRAPING_ENABLED:false}
 
 springdoc:
   api-docs:
