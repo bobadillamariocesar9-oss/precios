@@ -14,7 +14,7 @@ public class AgentPriceRefreshWorker {
 
     private final ScrapingJobService jobs;
     private final ScrapingLogService logs;
-    private final CotoScraperService cotoScraper;
+    private final SepaAmbaPriceService sepaAmbaPriceService;
 
     @Async("priceRefreshExecutor")
     public void execute(Integer jobId, Integer productId, boolean dryRun) {
@@ -24,7 +24,7 @@ public class AgentPriceRefreshWorker {
                 logs.info(jobId, "Botpress development simulation for product " + productId
                         + ": no network scraping and no price changes");
             } else {
-                cotoScraper.scrapeProductForJob(productId, jobId);
+                sepaAmbaPriceService.refreshOneProduct(productId, jobId);
             }
             jobs.updateStatus(jobId, Status.COMPLETED);
         } catch (Exception ex) {
