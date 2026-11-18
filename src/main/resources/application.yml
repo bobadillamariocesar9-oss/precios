@@ -57,7 +57,7 @@ app:
 agent:
   api-token: ${AGENT_API_TOKEN:}
   # Keep disabled until permitted sources, Chrome and matching are verified.
-  live-scraping-enabled: ${AGENT_LIVE_SCRAPING_ENABLED:false}
+  live-import-enabled: ${AGENT_LIVE_IMPORT_ENABLED:false}
 
 springdoc:
   api-docs:
