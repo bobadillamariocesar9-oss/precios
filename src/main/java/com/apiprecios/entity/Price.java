@@ -29,6 +29,19 @@ public class Price {
     @Column(name = "recorded_at")
     private LocalDateTime recordedAt;
 
+    // Provenance: SEPA is a third-party reported price, not a shelf verification.
+    @Column(name = "source_name", length = 60)
+    private String sourceName;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
+    @Column(name = "source_date")
+    private java.time.LocalDate sourceDate;
+
+    @Column(name = "price_scope", length = 60)
+    private String priceScope;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

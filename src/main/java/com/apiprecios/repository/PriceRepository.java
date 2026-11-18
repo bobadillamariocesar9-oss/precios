@@ -18,6 +18,9 @@ public interface PriceRepository extends JpaRepository<Price, Integer> {
     List<Price> findByProductIdOrderByRecordedAtDesc(Integer productId);
 
     List<Price> findByProductIdAndStoreId(Integer productId, Integer storeId);
+ 
+    Optional<Price> findFirstByProductIdAndStoreIdOrderByRecordedAtDesc(
+            Integer productId, Integer storeId);
 
     @Query("SELECT p FROM Price p WHERE p.product.id = :productId ORDER BY p.recordedAt DESC LIMIT 1")
     Optional<Price> findLatestPriceByProduct(@Param("productId") Integer productId);

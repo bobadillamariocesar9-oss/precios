@@ -49,6 +49,12 @@ public class SecurityConfig {
                     AntPathRequestMatcher.antMatcher("/v3/api-docs/**"),
                     AntPathRequestMatcher.antMatcher("/v3/api-docs.yaml")
                 ).permitAll()
+                // Dedicated Botpress routes validate X-Agent-Token in their controller.
+                // Do not require end-user Basic credentials for this machine-to-machine tool.
+                .requestMatchers(
+                    AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/agent/price-refresh"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/agent/price-refresh/*")
+                ).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/users")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/**")).permitAll()
                 .anyRequest().authenticated()

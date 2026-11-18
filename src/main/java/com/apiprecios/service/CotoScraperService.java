@@ -132,6 +132,28 @@ public class CotoScraperService {
         return scrapingJobService.findById(job.getId());
     }
 
+    /**
+     * One-product entry point used only when the development feature flag
+     * explicitly enables live scraping. Never launches a whole-catalog run.
+     */
+    public void scrapeProductForJob(Integer productId, Integer jobId) {
+        Product product = productService.findById(productId);
+        Store cotoStore = findOrCreateCotoStore();
+        WebDriver driver = createHeadlessChrome();
+        try {
+            BigDecimal precio = buscarPrecioProducto(driver, product);
+            if (precio == null) {
+                throw new IllegalStateException(
+                        "No verified price found for product " + productId);
+            }
+            boolean inserted = guardarPrecio(product, cotoStore, precio);
+            scrapingLogService.info(jobId, product.getName() + ": $" + precio
+                    + (inserted ? " (new observation)" : " (unchanged, not duplicated)"));
+        } finally {
+            driver.quit();
+        }
+    }
+
     // ── Búsqueda de un producto puntual ───────────────────────────────────
 
     private BigDecimal buscarPrecioProducto(WebDriver driver, Product product) {
@@ -154,8 +176,6 @@ public class CotoScraperService {
         Set<String> pistas = palabrasClave(keyword);
         List<WebElement> hojas = driver.findElements(By.xpath("//*[not(*)]"));
 
-        BigDecimal primerCandidatoSinValidar = null;
-
         for (WebElement hoja : hojas) {
             String texto;
             try {
@@ -171,19 +191,13 @@ public class CotoScraperService {
             if (precio == null) continue;
             if (precio.compareTo(BigDecimal.ONE) < 0) continue; // descarta ruido tipo "$0"
 
-            if (primerCandidatoSinValidar == null) {
-                primerCandidatoSinValidar = precio;
-            }
-
             if (contextoRelevante(hoja, pistas)) {
                 return precio;
             }
         }
 
-        // Nadie pasó la validación de contexto — devolvemos el primer precio
-        // encontrado en la página como mejor esfuerzo (los resultados de
-        // búsqueda suelen mostrar lo más relevante primero).
-        return primerCandidatoSinValidar;
+        // Do not persist an arbitrary price from the search-results page.
+        return null;
     }
 
     // ── Validación de contexto ─────────────────────────────────────────────
@@ -234,10 +248,20 @@ public class CotoScraperService {
     // ── Utilidades ─────────────────────────────────────────────────────────
 
     private WebDriver createHeadlessChrome() {
-        WebDriverManager.chromedriver().setup();
+        String driverPath = System.getenv("CHROMEDRIVER_PATH");
+        if (driverPath != null && !driverPath.isBlank()) {
+            System.setProperty("webdriver.chrome.driver", driverPath);
+        } else {
+            WebDriverManager.chromedriver().setup();
+        }
         ChromeOptions options = new ChromeOptions();
+        String chromePath = System.getenv("CHROME_BIN");
+        if (chromePath != null && !chromePath.isBlank()) {
+            options.setBinary(chromePath);
+        }
         options.addArguments("--headless=new");
         options.addArguments("--disable-gpu");
+        options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--no-sandbox");
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--lang=es-AR");
@@ -279,7 +303,15 @@ public class CotoScraperService {
                         .build()));
     }
 
-    private void guardarPrecio(Product product, Store store, BigDecimal precio) {
+    private boolean guardarPrecio(Product product, Store store, BigDecimal precio) {
+        boolean unchanged = priceRepository
+                .findFirstByProductIdAndStoreIdOrderByRecordedAtDesc(
+                        product.getId(), store.getId())
+                .map(last -> last.getPrice().compareTo(precio) == 0)
+                .orElse(false);
+        if (unchanged) {
+            return false;
+        }
         priceRepository.save(Price.builder()
                 .product(product)
                 .store(store)
@@ -287,5 +319,6 @@ public class CotoScraperService {
                 .currency("ARS")
                 .recordedAt(LocalDateTime.now())
                 .build());
+        return true;
     }
 }

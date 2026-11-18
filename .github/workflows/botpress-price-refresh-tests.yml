@@ -1,0 +1,24 @@
+name: Botpress price refresh tests
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/botpress-price-refresh-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compile and run Botpress price refresh unit tests
+        run: mvn -B -Dtest=AgentPriceRefreshControllerTest,AgentPriceRefreshServiceTest,SepaAmbaPriceServiceTest test
