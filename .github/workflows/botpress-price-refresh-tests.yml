@@ -21,4 +21,4 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Compile and run Botpress price refresh unit tests
-        run: mvn -B -Dtest=AgentPriceRefreshControllerTest,AgentPriceRefreshServiceTest test
+        run: mvn -B -Dtest=AgentPriceRefreshControllerTest,AgentPriceRefreshServiceTest,SepaAmbaPriceServiceTest test
