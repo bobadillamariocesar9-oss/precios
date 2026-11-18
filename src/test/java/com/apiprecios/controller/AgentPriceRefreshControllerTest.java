@@ -25,7 +25,7 @@ class AgentPriceRefreshControllerTest {
 
     @Test
     void rejectsMissingOrWrongToken() {
-        var request = new AgentPriceRefreshController.RefreshRequest(1, "COTO_DIGITAL", true);
+        var request = new AgentPriceRefreshController.RefreshRequest(1, "SEPA_AMBA", true);
         assertEquals(HttpStatus.UNAUTHORIZED, assertThrows(ResponseStatusException.class,
                 () -> controller.requestRefresh(null, request)).getStatusCode());
         assertEquals(HttpStatus.UNAUTHORIZED, assertThrows(ResponseStatusException.class,
@@ -36,22 +36,22 @@ class AgentPriceRefreshControllerTest {
     @Test
     void rejectsUnconfiguredIntegration() {
         ReflectionTestUtils.setField(controller, "apiToken", "");
-        var request = new AgentPriceRefreshController.RefreshRequest(1, "COTO_DIGITAL", true);
+        var request = new AgentPriceRefreshController.RefreshRequest(1, "SEPA_AMBA", true);
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, assertThrows(ResponseStatusException.class,
                 () -> controller.requestRefresh("anything", request)).getStatusCode());
     }
 
     @Test
     void acceptsValidTokenAndDelegatesToService() {
-        var request = new AgentPriceRefreshController.RefreshRequest(7, "COTO_DIGITAL", null);
+        var request = new AgentPriceRefreshController.RefreshRequest(7, "SEPA_AMBA", null);
         var expected = new AgentPriceRefreshController.RefreshAccepted(
                 42, ScrapingJob.Status.PENDING, true);
-        when(service.start(7, "COTO_DIGITAL", null)).thenReturn(expected);
+        when(service.start(7, "SEPA_AMBA", null)).thenReturn(expected);
 
         var response = controller.requestRefresh("test-secret-not-for-production", request);
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
         assertEquals(42, response.getBody().jobId());
-        verify(service).start(7, "COTO_DIGITAL", null);
+        verify(service).start(7, "SEPA_AMBA", null);
     }
 }
