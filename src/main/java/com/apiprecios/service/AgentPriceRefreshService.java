@@ -19,23 +19,23 @@ public class AgentPriceRefreshService {
     private final ScrapingJobService jobService;
     private final AgentPriceRefreshWorker worker;
 
-    @Value("${agent.live-scraping-enabled:false}")
-    private boolean liveScrapingEnabled;
+    @Value("${agent.live-import-enabled:false}")
+    private boolean liveImportEnabled;
 
     public RefreshAccepted start(Integer productId, String source, Boolean dryRunFlag) {
-        if (source != null && !source.equals("COTO_DIGITAL")) {
+        if (source != null && !source.equals("SEPA_AMBA")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported price source");
         }
 
         boolean dryRun = !Boolean.FALSE.equals(dryRunFlag);
-        if (!dryRun && !liveScrapingEnabled) {
+        if (!dryRun && !liveImportEnabled) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Live scraping is disabled in this development environment");
+                    "Live price import is disabled in this development environment");
         }
 
         productService.findById(productId); // reject unknown products before scheduling
         ScrapingJob job = jobService.create(ScrapingJob.builder()
-                .url("https://www.cotodigital.com.ar/sitios/cdigi/browse")
+                .url("https://hysmarcos.github.io/superprecios-claros/")
                 .build());
 
         try {
