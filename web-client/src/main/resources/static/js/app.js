@@ -36,6 +36,11 @@ createApp({
 
       // Carro de compra: acumula los ítems tildados en el modal, de
       // cualquier producto, hasta que se presiona "Comprar".
+      basketAdvice: null,
+      basketExplanation: '',
+      basketLoading: false,
+      basketAiLoading: false,
+      basketError: '',
       cart: [],  // { priceId, productId, productName, brand, storeName, storeAddress, price, currency }
       pricesMode: 'all',    // 'nearby' | 'all' — cómo se obtuvo la lista actual
       radiusKm: 10,
@@ -263,6 +268,43 @@ createApp({
     // Quita un ítem puntual del carro (desde la pantalla Carrito)
     removeFromCart(priceId) {
       this.cart = this.cart.filter(item => item.priceId !== priceId);
+    },
+
+    // Recomienda usando datos reales. La IA solo explica los cálculos ya hechos.
+    async analyzeBasket() {
+      const ids = [...new Set(this.cart.map(item => item.productId))];
+      if (ids.length === 0) return;
+      if (ids.length > 10) {
+        this.basketError = 'Para esta primera versión, elegí hasta 10 productos distintos.';
+        return;
+      }
+      this.basketError = '';
+      this.basketAdvice = null;
+      this.basketExplanation = '';
+      this.basketLoading = true;
+      try {
+        this.basketAdvice = await API.compareBasket(ids);
+      } catch (e) {
+        this.basketError = 'Iniciá sesión para analizar tu carrito. ' + e.message;
+      } finally {
+        this.basketLoading = false;
+      }
+    },
+
+    async explainBasketWithAi() {
+      if (!this.basketAdvice || this.basketAiLoading) return;
+      const ids = [...new Set(this.cart.map(item => item.productId))];
+      this.basketAiLoading = true;
+      this.basketExplanation = '';
+      this.basketError = '';
+      try {
+        const result = await API.explainBasket(ids);
+        this.basketExplanation = result.explanation;
+      } catch (e) {
+        this.basketError = 'No se pudo generar la explicación de IA. ' + e.message;
+      } finally {
+        this.basketAiLoading = false;
+      }
     },
 
     // Simula la compra: no hay pasarela de pago real, solo confirma el
