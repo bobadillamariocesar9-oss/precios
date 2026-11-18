@@ -25,7 +25,7 @@ class AgentPriceRefreshServiceTest {
         jobs = mock(ScrapingJobService.class);
         worker = mock(AgentPriceRefreshWorker.class);
         service = new AgentPriceRefreshService(products, jobs, worker);
-        ReflectionTestUtils.setField(service, "liveScrapingEnabled", false);
+        ReflectionTestUtils.setField(service, "liveImportEnabled", false);
     }
 
     @Test
@@ -34,7 +34,7 @@ class AgentPriceRefreshServiceTest {
         when(jobs.create(any(ScrapingJob.class)))
                 .thenReturn(ScrapingJob.builder().id(42).status(ScrapingJob.Status.PENDING).build());
 
-        var response = service.start(7, "COTO_DIGITAL", null);
+        var response = service.start(7, "SEPA_AMBA", null);
 
         assertEquals(42, response.jobId());
         assertTrue(response.dryRun());
@@ -44,7 +44,7 @@ class AgentPriceRefreshServiceTest {
     @Test
     void realScrapingRequiresFeatureFlag() {
         var ex = assertThrows(ResponseStatusException.class,
-                () -> service.start(7, "COTO_DIGITAL", false));
+                () -> service.start(7, "SEPA_AMBA", false));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verifyNoInteractions(products, jobs, worker);
     }
