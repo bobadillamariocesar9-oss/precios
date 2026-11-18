@@ -28,6 +28,26 @@ public class Store {
     @Column(name = "base_url", length = 500)
     private String baseUrl;
 
+    /**
+     * Backward-compatible alias used by older services/tests. No extra DB column:
+     * both url and baseUrl refer to the same storage field.
+     */
+    @Deprecated
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public String getUrl() { return baseUrl; }
+
+    @Deprecated
+    public void setUrl(String url) { this.baseUrl = url; }
+
+    public static class StoreBuilder {
+        @Deprecated
+        public StoreBuilder url(String url) {
+            this.baseUrl = url;
+            return this;
+        }
+    }
+
+
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
