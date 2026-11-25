@@ -23,7 +23,8 @@ public class AgentPriceRefreshService {
     private boolean liveImportEnabled;
 
     public RefreshAccepted start(Integer productId, String source, Boolean dryRunFlag) {
-        if (source != null && !source.equals("SEPA_AMBA")) {
+        boolean official = "SEPA_OFFICIAL".equals(source);
+        if (source != null && !source.equals("SEPA_AMBA") && !official) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported price source");
         }
 
@@ -35,11 +36,15 @@ public class AgentPriceRefreshService {
 
         productService.findById(productId); // reject unknown products before scheduling
         ScrapingJob job = jobService.create(ScrapingJob.builder()
-                .url("https://hysmarcos.github.io/superprecios-claros/")
+                .url(official ? SepaOfficialArchive.DATASET : "https://hysmarcos.github.io/superprecios-claros/")
                 .build());
 
         try {
-            worker.execute(job.getId(), productId, dryRun);
+            if (official) {
+                worker.executeOfficial(job.getId(), productId, dryRun);
+            } else {
+                worker.execute(job.getId(), productId, dryRun);
+            }
         } catch (RuntimeException schedulingError) {
             jobService.updateStatus(job.getId(), Status.FAILED);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
