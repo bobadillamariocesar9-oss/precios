@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Persists validated regional observations using the configured Spring datasource
@@ -67,42 +67,77 @@ public class SepaPersistenceService {
             }
         }
 
+        var rows = observations.stream().map(observation -> {
+            String name = "SEPA AMBA | " + observation.chain().trim();
+            return new Row(name, () -> stores.findByName(name).orElseGet(() ->
+                    stores.save(Store.builder().name(name)
+                            .baseUrl("https://www.datos.gob.ar/dataset/produccion-precios-claros---base-sepa")
+                            .address("Mediana AMBA por cadena; no es una sucursal").build())),
+                    sourceDate, observation.price());
+        }).toList();
+        return persist(productId, ean, sourceUrl, SOURCE, SCOPE, rows);
+    }
+
+    @Transactional
+    public Result persistOfficial(Integer productId, String ean, List<SepaOfficialArchive.Observation> observations) {
+        if (observations.isEmpty()) {
+            throw new IllegalArgumentException("No official SEPA prices matched the product and province");
+        }
+        var rows = observations.stream().map(observation -> {
+            String key = "SEPA " + observation.branch().key() + " | ";
+            return new Row(key, () -> findOrCreateBranch(key, observation.branch()),
+                    observation.date(), observation.price());
+        }).toList();
+        return persist(productId, ean, SepaOfficialArchive.DATASET, "SEPA", "BRANCH_LIST", rows);
+    }
+
+    private Store findOrCreateBranch(String key, SepaOfficialArchive.Branch branch) {
+        List<Store> matches = entityManager.createQuery(
+                        "select s from Store s where s.name like :prefix", Store.class)
+                .setParameter("prefix", key + "%").getResultList();
+        if (matches.size() > 1) {
+            throw new IllegalStateException("Duplicate branch: " + key);
+        }
+        if (!matches.isEmpty()) {
+            return matches.getFirst();
+        }
+        String name = key + branch.name();
+        return stores.save(Store.builder().name(name.substring(0, Math.min(150, name.length())))
+                .address(branch.address()).latitude(branch.latitude()).longitude(branch.longitude())
+                .baseUrl(SepaOfficialArchive.DATASET).build());
+    }
+
+    private Result persist(Integer productId, String ean, String sourceUrl, String source,
+                           String scope, List<Row> rows) {
         Product product = entityManager.find(Product.class, productId, LockModeType.PESSIMISTIC_WRITE);
         if (product == null || !ean.equals(product.getEan())) {
             throw new IllegalArgumentException("SEPA EAN does not match the stored product");
         }
-
-        // Lock order is product then stores, sorted to avoid cross-product deadlocks.
         int saved = 0, unchanged = 0, corrected = 0;
-        var sorted = observations.stream()
-                .sorted(java.util.Comparator.comparing(o -> o.chain().trim())).toList();
-        for (Observation observation : sorted) {
-            String storeName = "SEPA AMBA | " + observation.chain().trim();
-            // Transaction-scoped database lock also protects creation of a shared chain.
+        var sorted = rows.stream().sorted(java.util.Comparator.comparing(Row::key)).toList();
+        for (Row row : sorted) {
             entityManager.createNativeQuery(
-                    "SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))")
-                    .setParameter("key", storeName).getSingleResult();
-            Store store = stores.findByName(storeName).orElseGet(() ->
-                    stores.saveAndFlush(Store.builder().name(storeName)
-                            .baseUrl("https://www.datos.gob.ar/dataset/produccion-precios-claros---base-sepa")
-                            .address("Mediana AMBA por cadena; no es una sucursal").build()));
+                    "SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(:key, 0))")
+                    .setParameter("key", row.key()).getSingleResult();
+            Store store = row.store().get();
+            LocalDate sourceDate = row.date();
             List<Price> existing = entityManager.createQuery("""
                     select p from Price p where p.product.id = :productId
                     and p.store.id = :storeId and p.sourceName = :source
                     and p.priceScope = :scope and p.sourceDate = :date
                     """, Price.class)
                     .setParameter("productId", productId).setParameter("storeId", store.getId())
-                    .setParameter("source", SOURCE).setParameter("scope", SCOPE)
+                    .setParameter("source", source).setParameter("scope", scope)
                     .setParameter("date", sourceDate).getResultList();
             if (existing.size() > 1) {
                 throw new IllegalStateException("Duplicate SEPA observations require reconciliation");
             }
             if (!existing.isEmpty()) {
                 Price old = existing.getFirst();
-                if (old.getPrice().compareTo(observation.price()) == 0) {
+                if (old.getPrice().compareTo(row.price()) == 0) {
                     unchanged++;
                 } else {
-                    old.setPrice(observation.price());
+                    old.setPrice(row.price());
                     old.setSourceUrl(sourceUrl);
                     // Keep original recordedAt: a correction must not reorder source dates.
                     corrected++;
@@ -110,16 +145,18 @@ public class SepaPersistenceService {
                 continue;
             }
             prices.saveAndFlush(Price.builder().product(product).store(store)
-                    .price(observation.price()).currency("ARS")
+                    .price(row.price()).currency("ARS")
                     // Queries for current prices order by recordedAt; use source day so an
                     // older file imported later cannot displace a newer observation.
                     .recordedAt(sourceDate.atStartOfDay())
-                    .sourceName(SOURCE).sourceUrl(sourceUrl).sourceDate(sourceDate)
-                    .priceScope(SCOPE).build());
+                    .sourceName(source).sourceUrl(sourceUrl).sourceDate(sourceDate)
+                    .priceScope(scope).build());
             saved++;
         }
         return new Result(saved, unchanged, corrected);
     }
+
+    private record Row(String key, Supplier<Store> store, LocalDate date, BigDecimal price) {}
 
     public record Observation(String chain, BigDecimal price) {}
     public record Result(int saved, int unchanged, int corrected) {}
