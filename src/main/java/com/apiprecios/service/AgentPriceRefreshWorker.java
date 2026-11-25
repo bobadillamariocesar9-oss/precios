@@ -29,12 +29,24 @@ public class AgentPriceRefreshWorker {
 
     @Async("priceRefreshExecutor")
     public void execute(Integer jobId, Integer productId, boolean dryRun) {
+        run(jobId, productId, dryRun, false);
+    }
+
+    @Async("priceRefreshExecutor")
+    public void executeOfficial(Integer jobId, Integer productId, boolean dryRun) {
+        run(jobId, productId, dryRun, true);
+    }
+
+    private void run(Integer jobId, Integer productId, boolean dryRun, boolean official) {
         try {
             jobs.updateStatus(jobId, Status.RUNNING);
             if (dryRun) {
                 logs.info(jobId, "Botpress development simulation for product " + productId
                         + ": no network scraping and no price changes");
-            } else if (!officialZip.isBlank()) {
+            } else if (official) {
+                if (officialZip.isBlank()) {
+                    throw new IllegalStateException("AGENT_SEPA_OFFICIAL_ZIP is required");
+                }
                 String ean = products.findById(productId).getEan();
                 if (!SepaAmbaPriceService.isValidEan13(ean)) {
                     throw new IllegalArgumentException("Official SEPA import requires a valid product EAN-13");
