@@ -28,6 +28,12 @@ WORKDIR /app
 
 COPY --from=build /app/target/api-precios-0.0.1-SNAPSHOT.jar app.jar
 
+# Snapshot de SEPA minorista del 24/11/2026 filtrado a CABA y EAN 7790742448309.
+COPY deploy-data/sepa-caba-7790742448309-2026-11-24.zip /app/sepa.zip
+ENV AGENT_SEPA_OFFICIAL_ZIP=/app/sepa.zip
+ENV AGENT_LIVE_IMPORT_ENABLED=true
+
 EXPOSE 10000
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
