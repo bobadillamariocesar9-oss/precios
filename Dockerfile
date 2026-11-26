@@ -33,6 +33,9 @@ COPY deploy-data/sepa-caba-7790742448309-2026-11-24.zip /app/sepa.zip
 ENV AGENT_SEPA_OFFICIAL_ZIP=/app/sepa.zip
 ENV AGENT_LIVE_IMPORT_ENABLED=true
 
+COPY deploy-data/flores-pilot/ /app/sepa-pilot/
+ENV AGENT_SEPA_PILOT_ENABLED=true
+
 EXPOSE 10000
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

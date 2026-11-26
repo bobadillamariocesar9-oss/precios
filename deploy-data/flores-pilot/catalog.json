@@ -1,0 +1,23 @@
+[
+  {
+    "ean": "7790742192301",
+    "name": "Leche Entera 3% Casanto 1L SCH-1000-ml.",
+    "brand": "CASANTO",
+    "category": "Leche",
+    "count": 21
+  },
+  {
+    "ean": "7790070431417",
+    "name": "Arroz GALLO Parboil Bolsa 1kg PAQ-1000-gr.",
+    "brand": "GALLO",
+    "category": "Arroz",
+    "count": 13
+  },
+  {
+    "ean": "7792180137937",
+    "name": "Aceite Girasol PUREZA 0,9L BOT-900-ml.",
+    "brand": "PUREZA",
+    "category": "Aceite",
+    "count": 8
+  }
+]
