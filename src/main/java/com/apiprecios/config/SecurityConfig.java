@@ -57,6 +57,10 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.POST, "/api/users")).permitAll()
                 .requestMatchers(AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/api/**")).permitAll()
+                .requestMatchers(
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/donde-compro.html"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/donde-compro/**")
+                ).permitAll()
                 .anyRequest().authenticated()
             )
 

@@ -13,6 +13,8 @@ COPY pom.xml .
 RUN mvn -B dependency:go-offline
 
 COPY src ./src
+COPY web-client/src/main/resources/static/donde-compro.html ./src/main/resources/static/donde-compro.html
+COPY web-client/src/main/resources/static/donde-compro/ ./src/main/resources/static/donde-compro/
 RUN mvn -B clean package -DskipTests -Dmaven.test.skip=true
 
 # ── Etapa 2: runtime ──────────────────────────────────────────

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f9f5">
+  <meta name="description" content="Compará precios registrados en sucursales cerca de Flores, CABA.">
+  <title>¿Dónde compro? | Precios</title>
+  <link rel="stylesheet" href="/donde-compro/comparador.css">
+  <script type="module" src="/donde-compro/comparador.js"></script>
+</head>
+<body>
+  <header class="top"><div class="wrap navbar">
+    <span class="brand">Precios<span aria-hidden="true">.</span></span>
+    <a class="nav-chat chat" href="https://cdn.botpress.cloud/webchat/v5.0/shareable.html?configUrl=https://files.bpcontent.cloud/2026/11/12/20/20261112203420-YGCR0K5H.json" target="_blank" rel="noopener">Preguntale a Precios <span aria-hidden="true">↗</span></a>
+  </div></header>
+  <main class="wrap">
+    <section class="intro" aria-labelledby="title">
+      <p class="location">Flores, CABA <span>·</span> Radio de 2 km</p>
+      <h1 id="title">¿Dónde compro?</h1>
+      <p class="lead">Buscá un producto y compará cuánto cuesta y a qué distancia está cada sucursal.</p>
+      <form id="search">
+        <label for="query">Producto, marca o código de barras</label>
+        <div class="search-row">
+          <input id="query" name="q" type="search" placeholder="Ej. Chocolinas de 250 g" maxlength="120" required>
+          <button class="primary" type="submit">Buscar precios</button>
+        </div>
+      </form>
+      <div class="examples" aria-label="Búsquedas para probar">
+        <button type="button" data-query="Chocolinas 250 g">Chocolinas 250 g</button>
+        <button type="button" data-query="Arroz Gallo 1 kg">Arroz Gallo 1 kg</button>
+        <button type="button" data-query="Lavandina Ayudín">Lavandina Ayudín</button>
+      </div>
+    </section>
+    <p id="status" role="status" aria-live="polite"></p>
+    <section id="choices" aria-labelledby="choices-title" hidden>
+      <h2 id="choices-title">Elegí un producto</h2>
+      <ul id="products" class="products"></ul>
+    </section>
+    <section id="result" aria-labelledby="product-name" hidden>
+      <div class="result-head">
+        <div><p class="section-label">Comparación por sucursal</p><h2 id="product-name"></h2></div>
+        <div class="sort">
+          <label for="sort">Ordenar por</label>
+          <select id="sort"><option value="price">Menor precio</option><option value="distance">Distancia</option></select>
+        </div>
+      </div>
+      <ol id="offers" class="offers"></ol>
+      <button id="show-all" class="secondary" type="button" hidden>Ver todas las opciones</button>
+      <p class="source">Fuente de los precios y fechas: <a href="https://datos.produccion.gob.ar/dataset/sepa-precios">SEPA</a>. Los importes corresponden al día informado y pueden haber cambiado.</p>
+    </section>
+  </main>
+</body>
+</html>

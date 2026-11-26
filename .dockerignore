@@ -1,5 +1,16 @@
 target/
-web-client/
+web-client/*
+!web-client/src/
+web-client/src/*
+!web-client/src/main/
+web-client/src/main/*
+!web-client/src/main/resources/
+web-client/src/main/resources/*
+!web-client/src/main/resources/static/
+web-client/src/main/resources/static/*
+!web-client/src/main/resources/static/donde-compro.html
+!web-client/src/main/resources/static/donde-compro/
+!web-client/src/main/resources/static/donde-compro/**
 .idea/
 .vscode/
 .git/
