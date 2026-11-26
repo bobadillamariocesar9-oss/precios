@@ -1,23 +1,44 @@
 [
   {
-    "ean": "7790742192301",
-    "name": "Leche Entera 3% Casanto 1L SCH-1000-ml.",
-    "brand": "CASANTO",
-    "category": "Leche",
-    "count": 21
+    "ean": "7790070336552",
+    "name": "Fideos DON VICENTE Caserito x500g PAQ-500-gr.",
+    "brand": "DON VICENTE",
+    "category": "Pastas secas",
+    "count": 12
   },
   {
-    "ean": "7790070431417",
-    "name": "Arroz GALLO Parboil Bolsa 1kg PAQ-1000-gr.",
-    "brand": "GALLO",
-    "category": "Arroz",
-    "count": 13
+    "ean": "7790895007217",
+    "name": "gaseosa COCA COLA Regular 1.75lt PET-1750-ml.",
+    "brand": "COCA COLA",
+    "category": "Bebidas",
+    "count": 12
   },
   {
-    "ean": "7792180137937",
-    "name": "Aceite Girasol PUREZA 0,9L BOT-900-ml.",
-    "brand": "PUREZA",
-    "category": "Aceite",
-    "count": 8
+    "ean": "7793253003838",
+    "name": "Ayudín Lavandina en Gel Lavanda 700ml BOT-700-ml.",
+    "brand": "AYUDIN",
+    "category": "Limpieza",
+    "count": 12
+  },
+  {
+    "ean": "7791293045740",
+    "name": "shampoo SEDAL crema balance 340ml BOT-340-ml.",
+    "brand": "SEDAL",
+    "category": "Higiene personal",
+    "count": 12
+  },
+  {
+    "ean": "7790040143234",
+    "name": "Galletitas CHOCOLINAS x250g PAQ-250-gr.",
+    "brand": "CHOCOLINAS",
+    "category": "Galletitas",
+    "count": 12
+  },
+  {
+    "ean": "7790580132392",
+    "name": "Arvejas Seca ARCOR X300gr LAT-300-gr.",
+    "brand": "ARCOR",
+    "category": "Conservas",
+    "count": 12
   }
 ]

@@ -36,8 +36,8 @@ public class SepaFloresPilot implements ApplicationRunner {
         }
         List<PilotProduct> catalog = json.readValue(DIRECTORY.resolve("catalog.json").toFile(),
                 new TypeReference<List<PilotProduct>>() {});
-        if (catalog.isEmpty() || catalog.size() > 3) {
-            throw new IllegalArgumentException("Expected one to three pilot products");
+        if (catalog.isEmpty() || catalog.size() > 6) {
+            throw new IllegalArgumentException("Expected one to six pilot products");
         }
         em.createNativeQuery("SELECT 1 FROM pg_advisory_xact_lock(4839601702145763131)")
                 .getSingleResult();
